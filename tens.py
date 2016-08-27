@@ -21,7 +21,7 @@ class Tensor:
         self.func = new_func
         self.argcount = len(index)
 
-    def evaluate(self, default_size = None, sizes = None):
+    def string(self, default_size = None, sizes = None):
         sizes = [] if sizes is None else sizes
         default_size = self.default_size if default_size is None else default_size
         while len(sizes) < self.argcount:
@@ -30,10 +30,23 @@ class Tensor:
         sizes = sizes[:self.argcount]
         print(sizes,self.argcount)
 
-        string = []
+        strings = []
+        breakpoints = []
         for i in itertools.product(*(range(i) for i in sizes)):
-            string.append(str(self.func(*i)))
-        print(*string, sep = '\t')    
+            hor_index = sum(val*default_size**(pos//2) for pos,val in enumerate(reversed(i)) if pos % 2 == 0)
+            vert_index = sum(val*default_size**(pos//2) for pos,val in enumerate(reversed(i)) if pos % 2 == 1)
+            #print(i, hor_index, vert_index)
+            try:
+                strings[vert_index] += ("\t" if i[-1] == 0 else " ") + str(self.func(*i))
+            except IndexError:
+                if i[-2] == default_size-1:
+                    breakpoints += [vert_index]
+                strings.append(str(self.func(*i)))
+            #string.append(str(self.func(*i)))
+        return "\n".join((val+"\n") if pos in breakpoints else val for pos,val in enumerate(strings))
+
+    def __str__(self):
+        return self.string()
 
 
 class IndexedTensor:
@@ -124,8 +137,8 @@ class TensorExpr:
 
 
 
-
-
+eps = Tensor(lambda i,j,k:(1 if (k-j)%3==1 else -1)*(1 if set((i,j,k)) == set((0,1,2)) else 0))
+delta = Tensor(lambda i,j: int(i==j))
 
 
 
