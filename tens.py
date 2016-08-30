@@ -6,6 +6,7 @@ def product(iterable):
         p *= i
     return p
 
+
 class Tensor:
     default_size = 3
     def __init__(self, f=None):
@@ -39,7 +40,7 @@ class Tensor:
             try:
                 strings[vert_index] += ("\t" if i[-1] == 0 else " ") + str(self.func(*i))
             except IndexError:
-                if i[-2] == default_size-1:
+                if len(i) > 1 and i[-2] == default_size-1:
                     breakpoints += [vert_index]
                 strings.append(str(self.func(*i)))
             #string.append(str(self.func(*i)))
@@ -99,7 +100,15 @@ class TensorTerm:
                 self.index.append(key)
 
     def __mul__(self, other):
-        return TensorTerm(self.tensors + other.tensors)
+        if isinstance(other,IndexedTensor):
+            other_tensors = [other]
+        elif isinstance(other,TensorTerm):
+            other_tensors = other.tensors
+        
+        return TensorTerm(self.tensors + other_tensors)
+
+    def __rmul__(slef, other):
+        return self*other
 
     def __add__(self, other):
         return TensorExpr([self, other])
@@ -140,10 +149,8 @@ class TensorExpr:
 eps = Tensor(lambda i,j,k:(1 if (k-j)%3==1 else -1)*(1 if set((i,j,k)) == set((0,1,2)) else 0))
 delta = Tensor(lambda i,j: int(i==j))
 
-
-
-
-
+derive = Tensor(lambda i,j: j if i+1 == j else 0)
+exp = Tensor(lambda i: 1/product(range(1,i+1)))
 
 
 
