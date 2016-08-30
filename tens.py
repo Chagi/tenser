@@ -64,6 +64,9 @@ class IndexedTensor:
     def __add__(self, other):
         return TensorTerm([self]) + TensorTerm([other])
 
+    def __str__(self):
+        return str(self.index) + '\n' +str(self.tensor)
+
     def evaluate(self, index, args, sum_index, sum_args):
         total_index = index + sum_index
         total_args = args + sum_args
@@ -112,6 +115,9 @@ class TensorTerm:
 
     def __add__(self, other):
         return TensorExpr([self, other])
+
+    def __str__(self):
+        return '*\n'.join(str(i) for i in self.tensors)
 
     def evaluate(self, index, args):
         summ = []
