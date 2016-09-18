@@ -11,14 +11,22 @@ class Tensor:
                     return new_func(*args[:-1])[args[-1]]
             self.func = new_func
         else:
-            if f.__code__.co_argcount != len(index):
-                raise IndexError('no. indiices must match f args')
+            #if func.__code__.co_argcount != len(index):
+            #    raise IndexError('no. indiices must match f args')
             self.func = func
         self.index = index
         self.argcount = len(index)
 
     def __getitem__(self,index):
         return Tensor(self.func, *index)
+
+    def __setitem__(self, index, other):
+        ind_dict = {val: pos for pos,val in enumerate(other.index)}
+        def new_func(*args):
+            #print(ind_dict[i], args)
+            return other.func(*(args[ind_dict[i]] for i in index))
+        self.func = new_func
+        self.index = index
 
     def __add__(self, other):
         if not set(self.index) == set(other.index):
@@ -65,6 +73,7 @@ class Tensor:
             
 
     def string(self, default_size = None, sizes = None):
+        self.argcount = len(self.index)
         sizes = [] if sizes is None else sizes
         default_size = self.default_size if default_size is None else default_size
         while len(sizes) < self.argcount:
@@ -80,11 +89,11 @@ class Tensor:
             vert_index = sum(val*default_size**(pos//2) for pos,val in enumerate(reversed(i)) if pos % 2 == 1)
             #print(i, hor_index, vert_index)
             try:
-                strings[vert_index] += ("\t" if i[-1] == 0 else " ") + str(self.func(*i))
+                strings[vert_index] += ("\t" if i[-1] == 0 else " ") + ('%.2f'%self.func(*i))
             except IndexError:
                 if len(i) > 1 and i[-2] == default_size-1:
                     breakpoints += [vert_index]
-                strings.append(str(self.func(*i)))
+                strings.append( '%.2f'%self.func(*i) )
             #string.append(str(self.func(*i)))
         return "\n".join((val+"\n") if pos in breakpoints else val for pos,val in enumerate(strings))
 
@@ -98,11 +107,15 @@ def product(iterable):
         p *= i
     return p
 
-eps = Tensor(lambda i,j,k:(1 if (k-j)%3==1 else -1)*(1 if set((i,j,k)) == set((0,1,2)) else 0),'i','j','k')
+epsilon = Tensor(lambda i,j,k:(1 if (k-j)%3==1 else -1)*(1 if set((i,j,k)) == set((0,1,2)) else 0),'i','j','k')
 delta = Tensor(lambda i,j: int(i==j),'i','j')
 
 derive = Tensor(lambda i,j: j if i+1 == j else 0 , 'i','j')
 exp = Tensor(lambda i: 1/product(range(1,i+1)) , 'i')
 
+laplace2d = derive['x2','xd']*derive['xd','x1']*delta['y2','yd']*delta['yd','y1'] + \
+            delta['x2','xd']*delta['xd','x1']*derive['y2','yd']*derive['yd','y1']
+
+expexp = exp[['x1']]*exp[['y1']]
 
 
