@@ -17,6 +17,15 @@ class Tensor:
         self.index = index
         self.argcount = len(index)
 
+    def __call__(self, *args, **kwargs):
+        if len(args) > 0 and len(kwargs) > 0:
+            raise TypeError('either args or kwargs, not botg')
+
+        if len(args) > 0:
+            return self.func(*args)
+        elif len(kwargs) > 0:
+            return self.func(*(kwargs[i] for i in self.index))
+
     def __getitem__(self,index):
         return Tensor(self.func, *index)
 
