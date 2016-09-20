@@ -5,10 +5,14 @@ class Tensor:
     def __init__(self, func, *index):
         if isinstance(func, (list,tuple)):
             def new_func(*args):
-                if len(args) == 1:
-                    return func[args[0]]
-                else:
-                    return new_func(*args[:-1])[args[-1]]
+                p = func
+                for i in args:
+                    try:
+                        p = p[i]
+                    except IndexError:
+                        p = 0
+                        break
+                return p
             self.func = new_func
         else:
             #if func.__code__.co_argcount != len(index):
@@ -49,6 +53,8 @@ class Tensor:
         return Tensor(new_func, *self.index)
 
     def __mul__(self, other):
+        if isinstance(other,(int,float)):
+            other = Tensor(lambda x=other : x)
         total_index = {}
         for i in self.index + other.index:
             try:
