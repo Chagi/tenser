@@ -84,8 +84,17 @@ class Tensor:
                 s += a*b
             return s
         return Tensor(new_func, *new_index)
+
+    def _list_rec(self, sizes, indices):
+        if len(sizes) == 0:
+            return self.func(*indices)
+        lis = []
+        for i in range(sizes[0]):
+            lis.append(self._list_rec(sizes[1:], indices+[i]))
+        return lis
         
-            
+    def to_list(self):
+        return self._list_rec([self.default_size]*self.argcount, [])
 
     def string(self, default_size = None, sizes = None):
         self.argcount = len(self.index)
@@ -103,12 +112,14 @@ class Tensor:
             hor_index = sum(val*default_size**(pos//2) for pos,val in enumerate(reversed(i)) if pos % 2 == 0)
             vert_index = sum(val*default_size**(pos//2) for pos,val in enumerate(reversed(i)) if pos % 2 == 1)
             #print(i, hor_index, vert_index)
+            val = self.func(*i)
+            val_s = '#' if val is None else '%.5f'%val
             try:
-                strings[vert_index] += ("\t" if i[-1] == 0 else " ") + ('%.2f'%self.func(*i))
+                strings[vert_index] += ("\t" if i[-1] == 0 else " ") + val_s
             except IndexError:
                 if len(i) > 1 and i[-2] == default_size-1:
                     breakpoints += [vert_index]
-                strings.append( '%.2f'%self.func(*i) )
+                strings.append( val_s )
             #string.append(str(self.func(*i)))
         return "\n".join((val+"\n") if pos in breakpoints else val for pos,val in enumerate(strings))
 
@@ -128,7 +139,8 @@ delta = Tensor(lambda i,j: int(i==j),'i','j')
 derive = Tensor(lambda i,j: j if i+1 == j else 0 , 'i','j')
 exp = Tensor(lambda i: 1/product(range(1,i+1)) , 'i')
 
-laplace2d = derive['x2','xd']*derive['xd','x1']*delta['y2','yd']*delta['yd','y1'] + \
+laplace2d = Tensor(None)
+laplace2d['x1','x2','y1','y2'] = derive['x2','xd']*derive['xd','x1']*delta['y2','yd']*delta['yd','y1'] + \
             delta['x2','xd']*delta['xd','x1']*derive['y2','yd']*derive['yd','y1']
 
 expexp = exp[['x1']]*exp[['y1']]
